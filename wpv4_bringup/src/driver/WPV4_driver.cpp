@@ -97,10 +97,10 @@ void CWPV4_driver::m_ParseFrame(unsigned char *inBuf, int inLen)
 {
 	nParseCount = 0;
 	int i;
-	switch (inBuf[2])		//����ID
+	switch (inBuf[2])		//设备ID
 	{
 	case 0x38:
-		switch (inBuf[4])	//ģ��
+		switch (inBuf[4])	//类型
 		{
 		case 0x07:		//AD
 			switch (inBuf[5])
@@ -126,8 +126,8 @@ void CWPV4_driver::m_ParseFrame(unsigned char *inBuf, int inLen)
 				arMotorPos[i] = m_Piece2int(&(inBuf[7+i*6]));
 				arMotorCurrent[i] = m_ShortFromChar(&(inBuf[7+i*6+4]));
 			}
-			//printf("M[1]= %.4d  M[2]= %.4d M[3]= %.4d \n", arMotorPos[0],arMotorPos[1],arMotorPos[2]);
-			//printf("C[1]= %.4d  C[2]= %.4d C[3]= %.4d \n", arMotorCurrent[0],arMotorCurrent[1],arMotorCurrent[2]);
+			//printf("M[0]= %.4d M[1]= %.4d  M[2]= %.4d M[3]= %.4d \n", arMotorPos[0],arMotorPos[1],arMotorPos[2],arMotorPos[3]);
+			//printf("C[0]= %.4d  C[1]= %.4d  C[2]= %.4d C[3]= %.4d \n", arMotorCurrent[0],arMotorCurrent[1],arMotorCurrent[2],arMotorCurrent[3]);
 			// printf("[Recv] ");
 			// for (int i = 0; i<inLen; i++)
 			// {

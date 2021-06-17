@@ -132,8 +132,14 @@ int main(int argc, char** argv)
     n_param.param<bool>("odom", bOdom, true);
     bool bImuOdom = false;
     n_param.param<bool>("imu_odom", bImuOdom, false);
-    bool bJointStatePub = true;
+    bool bJointStatePub = false;
     n_param.param<bool>("joint_state", bJointStatePub, false);
+    float kinect_height = 0.5;
+    float kinect_pitch = -0.2;
+    n_param.getParam("zeros/kinect_height", kinect_height);
+    n_param.getParam("zeros/kinect_pitch", kinect_pitch);
+    // ROS_WARN("zeros: kinect_height = %.2f  kinect_pitch= %.2f",kinect_height ,kinect_pitch);
+
     std::string chassis_type;
     if (n_param.getParam("chassis_type", chassis_type))
     {
@@ -186,8 +192,8 @@ int main(int argc, char** argv)
     joint_pos[1] = 0.0f;
     joint_pos[2] = 0.0f;
     joint_pos[3] = 0.0f;
-    joint_pos[4] = 0.50f;    //kinect_height
-    joint_pos[5] = -0.17f;    //kinect_pitch
+    joint_pos[4] = kinect_height;
+    joint_pos[5] = kinect_pitch;
     
     ros::Publisher odom_pub;
     geometry_msgs::TransformStamped odom_trans;

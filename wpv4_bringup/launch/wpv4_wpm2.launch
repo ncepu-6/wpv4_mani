@@ -6,9 +6,10 @@
 
   <!-- wpv4 core-->
   <node pkg="wpv4_bringup" type="wpv4_core" name="wpv4_core" output="screen">
-      <param name="serial_port" type="string" value="/dev/wpv4_base"/> 
-      <param name="chassis_type" type="string" value="4wd"/> 
-      <param name="joint_state" type="bool" value="true"/> 
+    <param name="serial_port" type="string" value="/dev/wpv4_base"/> 
+    <param name="joint_state" type="bool" value="true"/> 
+    <rosparam command="load" file="$(find wpv4_bringup)/config/settings.yaml" />
+    <rosparam command="load" file="$(find wpv4_bringup)/config/wpv4_zeros.yaml" />
   </node>
 
   <!-- wpm2 core-->
@@ -16,10 +17,12 @@
       <param name="serial_port" type="string" value="/dev/wpv4_mani"/> 
   </node>
 
+  <node name="wpm2_trackbars" pkg="wpm2_tutorials" type="wpm2_trackbars" output="screen"/>
+
   <param name="robot_description" command="$(find xacro)/xacro.py $(arg model)" />
   <param name="use_gui" value="$(arg gui)"/>
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
 </launch>
