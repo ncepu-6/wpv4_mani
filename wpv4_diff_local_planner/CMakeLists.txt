@@ -19,11 +19,13 @@ find_package(catkin REQUIRED
     std_msgs
     pluginlib
     tf
+    cv_bridge
 )
  
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package (PCL REQUIRED)
+find_package(OpenCV REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -136,7 +138,10 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS}
+  include 
+  ${catkin_INCLUDE_DIRS} 
+  ${PCL_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -225,8 +230,9 @@ install(FILES
 add_library(wpv4_diff_local_planner
   include/waterplus_local_planner/wpv4_diff_local_planner.h
   src/wpv4_diff_local_planner.cpp
+  src/wl_helper.cpp
 )
 add_dependencies(wpv4_diff_local_planner ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(wpv4_diff_local_planner
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} ${OpenCV_LIBS}
 )

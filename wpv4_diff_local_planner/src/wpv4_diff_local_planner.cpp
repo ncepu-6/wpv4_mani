@@ -1,4 +1,5 @@
 #include <waterplus_local_planner/wpv4_diff_local_planner.h>
+#include <waterplus_local_planner/wl_helper.h>
 #include <tf_conversions/tf_eigen.h>
 #include <pluginlib/class_list_macros.h>
 #include <ros/ros.h>
@@ -12,6 +13,7 @@ static float target_vel_x = 0;
 static float target_vel_z = 0;
 static float ac_vel_x = 0;
 static float ac_vel_z = 0;
+static float ranges[360];
 
 namespace waterplus_local_planner
 {
@@ -19,86 +21,21 @@ namespace waterplus_local_planner
     //激光雷达回调(避障)
     void WPV4DiffLocalPlanner::lidarCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
     {
-        return;
-        //int nRanges = scan->ranges.size();
-        //ROS_WARN("[WLP]range=%d ang= %.2f ",nRanges,scan->angle_increment); 
-
         int nRanges = scan->ranges.size();
-        float range_max = scan->range_max;
-        float range_min = scan->range_min;
-        const float ac_width = 0.30;
-        const float ac_dist = 0.5;
-
-        float left_obst = 1.0;      //记录障碍物在左方的的距离
-        float right_obst = 1.0;     //记录障碍物在右方的的距离
-        float front_obst = ac_dist+1; //记录障碍物在正前方的的距离
-
-        //right front
-        for(int i=180;i<360;i++)
+        // ROS_WARN("[WLP]range=%d ang= %.2f ",nRanges,scan->angle_increment); 
+        for(int i=0;i<360;i++)
         {
-             if(scan->ranges[i] < range_min || scan->ranges[i] > range_max)
-                continue;
-            float dist = scan->ranges[i] * sin((i-180)*fScaleD2R);
-            if(dist < ac_dist)
-            {
-                float width = scan->ranges[i] * cos((i-180)*fScaleD2R);
-                if(width < right_obst)
-                {
-                    right_obst = width;
-                }
-                if(dist < front_obst)
-                {
-                    front_obst = dist;
-                }
-            }
+            ranges[i] = scan->ranges[i];
         }
-
-        //left front
-        for(int i=360;i<540;i++)
-        {
-             if(scan->ranges[i] < range_min || scan->ranges[i] > range_max)
-                continue;
-            float dist = scan->ranges[i] * sin((540-i)*fScaleD2R);
-            if(dist < ac_dist)
-            {
-                float width = scan->ranges[i] * cos((540-i)*fScaleD2R);
-                if(width < left_obst)
-                {
-                    left_obst = width;
-                }
-                 if(dist < front_obst)
-                {
-                    front_obst = dist;
-                }
-            }
-        }
-
-        // ajust
-        if(right_obst > ac_width && left_obst > ac_width)
-        {
-            m_bAC = false;
-        }
-        else
-        {
-            m_bAC = true;
-            if(right_obst < left_obst)
-            {
-                //m_nAC_action = AC_TURN_LEFT;
-                ac_vel_z = 0.3;
-            }
-            else
-            {
-                //m_nAC_action = AC_TURN_RIGHT;
-                ac_vel_z = -0.3;
-            }
-            ac_vel_x = front_obst - ac_dist;
-        }
+        SetRanges(ranges);
     }
 
     //构造函数
     WPV4DiffLocalPlanner::WPV4DiffLocalPlanner()
     {
-        //ROS_WARN("[WLP]WPV4DiffLocalPlanner() "); 
+        setlocale(LC_CTYPE, "");
+        //ROS_WARN("[WLP]WPV4DiffLocalPlanner() ");  
+        InitHelper();
         m_costmap_ros = NULL;
         m_tf_listener = NULL; 
         m_goal_reached = false;
@@ -113,7 +50,7 @@ namespace waterplus_local_planner
 
     void WPV4DiffLocalPlanner::initialize(std::string name, tf::TransformListener* tf, costmap_2d::Costmap2DROS* costmap_ros)
     {
-        ROS_WARN("WPV4DiffLocalPlanner::initialize() ");
+        ROS_WARN("WPV4DiffLocalPlanner::initialize() - 1");
         if(!m_bInitialized)
         {	
             m_tf_listener = tf;
@@ -155,7 +92,7 @@ namespace waterplus_local_planner
 
     void WPV4DiffLocalPlanner::initialize(std::string name,tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros)
     {
-        ROS_WARN("WPV4DiffLocalPlanner::initialize() ");
+        ROS_WARN("WPV4DiffLocalPlanner::initialize() - 2");
         if(!m_bInitialized)
         {	
             m_tf_listener = new tf::TransformListener;
@@ -174,7 +111,7 @@ namespace waterplus_local_planner
             nh_planner.param("max_acc_trans", m_max_acc_trans, 0.5);
             nh_planner.param("max_acc_rot", m_max_acc_rot, 0.5);
             nh_planner.param("acc_scale_trans", m_acc_scale_trans, 0.5);
-            nh_planner.param("acc_scale_rot", m_acc_scale_rot, 0.6);
+            nh_planner.param("acc_scale_rot", m_acc_scale_rot, 0.3);
             nh_planner.param("path_dist_tolerance", m_path_dist_tolerance, 0.5);
             nh_planner.param("goal_dist_tolerance", m_goal_dist_tolerance, 0.2);
             nh_planner.param("goal_yaw_tolerance", m_goal_yaw_tolerance, 0.2);
@@ -296,6 +233,7 @@ namespace waterplus_local_planner
         cmd_vel.linear.x = 0;
         cmd_vel.linear.y = 0;
         cmd_vel.angular.z = 0;
+        bool res = true;
         
         if(m_nStep == WLP_STEP_ARRIVED)
         {
@@ -318,53 +256,114 @@ namespace waterplus_local_planner
             double goal_dist = sqrt(goal_x*goal_x + goal_y*goal_y);
             if(goal_dist < m_goal_dist_tolerance)
             {
+                // 足够靠近最终目标
                 m_nStep = WLP_STEP_NEAR;
                 ROS_WARN("[WLP-GOTO] -> [WLP_NEAR] (%.2f,%.2f) %.2f",goal_x, goal_y, goal_th);
             }
             else
             {
-                //check if path is near
-                double path_x, path_y, path_th;
-                while(m_nPathIndex < path_num-1)
+                // 未靠近最终目标，更新当前障碍物，准备避障
+                ClearObst();
+                SetRanges(ranges);
+                //从后续的路径点中找距离自己最近的
+                double minDist = 999;
+                int nMinDistIndex = m_nPathIndex;
+                double target_x, target_y, target_th;
+                for(int i=m_nPathIndex;i<path_num;i++)
                 {
-                    getTransformedPosition(m_global_plan[m_nPathIndex], m_robot_base_frame_id, path_x, path_y, path_th);
-                    if(sqrt(path_x*path_x + path_y*path_y) < m_path_dist_tolerance)
+                    getTransformedPosition(m_global_plan[i], m_robot_base_frame_id, target_x, target_y, target_th);
+                    if( ChkTarget(target_y/0.05+50,target_x/0.05+50) == true)
                     {
-                        m_nPathIndex ++;
-                        ROS_WARN("[WLP-GOTO]path index = %d ",m_nPathIndex);
+                        double tmpDist = sqrt(target_x*target_x + target_y*target_y);
+                        if(tmpDist < minDist && tmpDist >= m_goal_dist_tolerance)
+                        {
+                            nMinDistIndex = i;
+                            minDist = tmpDist;
+                        }
+                    }
+                }
+                m_nPathIndex = nMinDistIndex;
+
+                // 从距离自己最近的路径点往后遍历，在图中打点
+                double gpath_x, gpath_y, gpath_th;
+                ClearTarget();
+                for(int i=m_nPathIndex;i<path_num;i++)
+                {
+                    getTransformedPosition(m_global_plan[i], m_robot_base_frame_id, gpath_x, gpath_y, gpath_th);
+                    if(i == m_nPathIndex)
+                    {
+                        SetTarget(gpath_y/0.05+50,gpath_x/0.05+50,true);
                     }
                     else
                     {
-                        break;  //target is far enough
+                        SetTarget(gpath_y/0.05+50,gpath_x/0.05+50,false);
                     }
                 }
-
-                double face_path = CalDirectAngle(0, 0, path_x, path_y);
-                face_path = AngleFix(face_path,-2.1,2.1);
-                if(fabs(face_path)> 1.0)//0.82)
+                res = OutLine();
+                // if(res == false)
+                // {
+                //     cmd_vel.linear.x = 0;
+                //     cmd_vel.linear.y = 0;
+                //     cmd_vel.angular.z = 0;
+                //     return true;
+                // }
+                if(GetHelperNum() > 5 && (path_num - m_nPathIndex) > 1)
                 {
-                    //与目标航点角度太大,原地转
-                    //turn in place
-                    target_vel_x = 0;
-                    target_vel_z = face_path * m_acc_scale_rot * 1.5;
-                    if(target_vel_z > 0) target_vel_z +=1.5;
-                    if(target_vel_z < 0) target_vel_z -=1.5;
+                    target_x = GetFixX();
+                    target_y = GetFixY();
+                    gpath_x = GetFaceX();
+                    gpath_y = GetFaceY();
+                    //ROS_WARN("临时路径点大于5  target( %.2f , %.2f )  face (%.2f , %.2f )",target_x,target_y,gpath_x,gpath_y);
                 }
                 else
                 {
-                    //正常行驶,计算目标速度
-                    double path_dist = sqrt(path_x*path_x + path_y*path_y);
-                    target_vel_x = path_dist*cos(face_path) * m_acc_scale_trans;
-                    //target_vel_z = path_dist*sin(face_path) * m_acc_scale_trans;
-                    target_vel_z = face_path * m_acc_scale_rot;
-                    //ROS_WARN("cmd_vel.linear.x = %.2f ",cmd_vel.linear.x);
-                    if(target_vel_x > 0) target_vel_x+=0;
-                    if(target_vel_x < 0) target_vel_x-=0;
-                    if(target_vel_z > 0) target_vel_z+=0;
-                    if(target_vel_z < 0) target_vel_z-=0;
-                    // cmd_vel.linear.x = 0;
-                    // cmd_vel.linear.y = 0;
-                    //ROS_WARN("++ cmd_vel.linear.x = %.2f ",cmd_vel.linear.x);
+                    getTransformedPosition(m_global_plan[m_nPathIndex], m_robot_base_frame_id, target_x, target_y, target_th);
+                    int nFaceIndex = m_nPathIndex;
+                    double face_x,face_y,face_th;
+                    face_x = target_x;
+                    face_y = target_y;
+                    while(nFaceIndex < path_num)
+                    {
+                        getTransformedPosition(m_global_plan[nFaceIndex], m_robot_base_frame_id, face_x,face_y,face_th);
+                        double tmpDist = sqrt(face_x*face_x + face_y*face_y);
+                        if(tmpDist > 0.2)
+                        {
+                            break;
+                        }
+                        nFaceIndex ++;
+                    }
+                    gpath_x = face_x;
+                    gpath_y = face_y;
+                    gpath_th = face_th;
+
+                    //getTransformedPosition(m_global_plan[m_nPathIndex], m_robot_base_frame_id, gpath_x, gpath_y, gpath_th);
+                }
+ 
+                // 计算速度
+                //double face_target = CalDirectAngle(0, 0, gpath_x, gpath_y);
+                double face_target = 0;
+                // if((target_x !=gpath_x) || (target_y !=gpath_y) )
+                // {
+                //     face_target =CalDirectAngle(target_x, target_y, gpath_x, gpath_y);
+                // }
+                // else
+                // {
+                //     face_target = CalDirectAngle(0, 0, gpath_x, gpath_y);
+                // }
+                face_target = CalDirectAngle(0, 0, target_x, target_y);
+                face_target = AngleFix(face_target,-2.1,2.1);
+                if(fabs(face_target)> 0.8)
+                {
+                    //ROS_WARN("转弯角度大，原地打转");
+                    target_vel_x = 0;
+                    target_vel_z = face_target * m_acc_scale_rot;
+                }
+                else
+                {
+                    // start to move
+                    target_vel_x = target_x * m_acc_scale_trans;
+                    target_vel_z = face_target * m_acc_scale_rot;
+                    //ROS_WARN("正常移动，速度 vx= %.2f   vz = %.2f",target_vel_x,target_vel_z);
                 }
                 m_pub_target.publish(m_global_plan[m_nPathIndex]);
             }
@@ -389,13 +388,7 @@ namespace waterplus_local_planner
         }
 
         cmd_vel = m_last_cmd;
-
-        //////////////////
-        //避障速度叠加
-        cmd_vel.linear.x = ac_vel_x;
-        cmd_vel.angular.z = ac_vel_z;
-        //////////////////
-
+        
         //前后移动加速度控制
         if( fabs(target_vel_x - cmd_vel.linear.x) >  m_max_acc_trans)
         {
@@ -442,7 +435,7 @@ namespace waterplus_local_planner
 
         m_last_cmd = cmd_vel;
 
-        ROS_WARN("[WLP] target_x= %.2f, cmd_x = %.2f",target_vel_x, cmd_vel.linear.x);
+        ROS_WARN("[WLP] target_x= %.2f,  vel=( %.2f , %.2f) ",target_vel_x, cmd_vel.linear.x,cmd_vel.angular.z);
         
         return true;
     }
