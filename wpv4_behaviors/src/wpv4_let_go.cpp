@@ -72,18 +72,18 @@ void PalmAction(int inAction)
     {
         for(int i=0;i<5;i++)
         {
-            palm_ctrl_msg.position[i] = 100;
+            palm_ctrl_msg.position[i] = 1000;
         }
         palm_ctrl_msg.position[5] = 0;
     }
     // 1 握住手掌
     if(inAction == 1)
     {
-        palm_ctrl_msg.position[0] = 100;
-        palm_ctrl_msg.position[1] = 100;
-        palm_ctrl_msg.position[2] = 100;
-        palm_ctrl_msg.position[3] = 100;
-        palm_ctrl_msg.position[4] = 100;
+        palm_ctrl_msg.position[0] = 0;
+        palm_ctrl_msg.position[1] = 0;
+        palm_ctrl_msg.position[2] = 0;
+        palm_ctrl_msg.position[3] = 0;
+        palm_ctrl_msg.position[4] = 1000;
         palm_ctrl_msg.position[5] = 0;
     }
     palm_ctrl_pub.publish(palm_ctrl_msg);
@@ -165,12 +165,12 @@ int main(int argc, char** argv)
             mani_ctrl_msg.position[1] = 0;
             mani_ctrl_msg.position[2] = 90;
             mani_ctrl_msg.position[3] = 90;
-            mani_ctrl_msg.position[4] = 90;
+            mani_ctrl_msg.position[4] = -90;
             mani_ctrl_msg.position[5] = 0;
             mani_ctrl_msg.position[6] = 0;
             mani_ctrl_pub.publish(mani_ctrl_msg);
             nCount ++;
-            if(nCount > 5* 30)
+            if(nCount > 15* 30)
             {
                 nCount = 0;
                 step = STEP_GRIPER_LOOSE;

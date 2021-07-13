@@ -45,9 +45,9 @@
 // 抓取参数调节（单位：米）
 static float grab_y_offset = 0.0f;                  //机器人对准物品，横向位移偏移量
 
-static float target_dist = 0.85;                       //伸出手臂抓取前，对准物品的距离
-static float target_x_k = 0.5;                          //对准物品时，前后移动的速度系数
-static float target_z_k = 5.0;                          //对准物品时，旋转的速度系数
+static float target_dist = 0.95;                       //伸出手臂抓取前，对准物品的距离
+static float target_x_k = 0.3;                          //对准物品时，前后移动的速度系数
+static float target_z_k = 0.3;                          //对准物品时，旋转的速度系数
 
 static ros::Publisher obj_track_pub;
 static geometry_msgs::Pose obj_track_msg;
@@ -89,18 +89,18 @@ void PalmAction(int inAction)
     {
         for(int i=0;i<5;i++)
         {
-            palm_ctrl_msg.position[i] = 100;
+            palm_ctrl_msg.position[i] = 1000;
         }
         palm_ctrl_msg.position[5] = 0;
     }
     // 1 握住手掌
     if(inAction == 1)
     {
-        palm_ctrl_msg.position[0] = 100;
-        palm_ctrl_msg.position[1] = 100;
-        palm_ctrl_msg.position[2] = 100;
-        palm_ctrl_msg.position[3] = 100;
-        palm_ctrl_msg.position[4] = 100;
+        palm_ctrl_msg.position[0] = 0;
+        palm_ctrl_msg.position[1] = 0;
+        palm_ctrl_msg.position[2] = 0;
+        palm_ctrl_msg.position[3] = 0;
+        palm_ctrl_msg.position[4] = 1000;
         palm_ctrl_msg.position[5] = 0;
     }
     palm_ctrl_pub.publish(palm_ctrl_msg);
@@ -234,14 +234,14 @@ int main(int argc, char** argv)
                 mani_ctrl_msg.position[1] = -110;
                 mani_ctrl_msg.position[2] = 90;
                 mani_ctrl_msg.position[3] = 40;
-                mani_ctrl_msg.position[4] = 90;
-                mani_ctrl_msg.position[5] = 60;
+                mani_ctrl_msg.position[4] = -90;
+                mani_ctrl_msg.position[5] = -60;
                 mani_ctrl_msg.position[6] = 0;
                 mani_ctrl_pub.publish(mani_ctrl_msg);
             }
             mani_ctrl_pub.publish(mani_ctrl_msg);
             nCount ++;
-            if(nCount > 6* 30)
+            if(nCount > 15* 30)
             {
                 nCount = 0;
                 step = STEP_FORWARD;
@@ -254,11 +254,11 @@ int main(int argc, char** argv)
         // 前进进行抓取
         if(step == STEP_FORWARD)
         {
-            //VelCmd(0.1,0,0);
-            mani_ctrl_msg.position[0] = 0;          //根旋转关节
-            mani_ctrl_pub.publish(mani_ctrl_msg);
+            VelCmd(0.1,0,0);
+           // mani_ctrl_msg.position[0] = 0;          //根旋转关节
+            //mani_ctrl_pub.publish(mani_ctrl_msg);
             nCount ++;
-            if(nCount > 1.0* 30)
+            if(nCount > 1.0 * 30)
             {
                 nCount = 0;
                 step = STEP_GRAB_OBJ;
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
             VelCmd(0,0,0);
             PalmAction(1);
             nCount ++;
-            if(nCount > 5* 30)
+            if(nCount > 3* 30)
             {
                 nCount = 0;
                 step = STEP_TAKE_OVER;
@@ -291,13 +291,13 @@ int main(int argc, char** argv)
             mani_ctrl_msg.position[0] = 0;          //根旋转关节
             mani_ctrl_msg.position[1] = -30;
             mani_ctrl_msg.position[2] = 90;
-            mani_ctrl_msg.position[3] = 120;
-            mani_ctrl_msg.position[4] = 90;
-            mani_ctrl_msg.position[5] = 60;
+            mani_ctrl_msg.position[3] = 100;
+            mani_ctrl_msg.position[4] = -90;
+            mani_ctrl_msg.position[5] = -50;
             mani_ctrl_msg.position[6] = 0;
             mani_ctrl_pub.publish(mani_ctrl_msg);
             nCount ++;
-            if(nCount > 3* 30)
+            if(nCount > 5* 30)
             {
                 nCount = 0;
                 step = STEP_BACKWARD;
@@ -312,7 +312,7 @@ int main(int argc, char** argv)
         {
             VelCmd(-0.1,0,0);
             nCount ++;
-            if(nCount > 1* 30)
+            if(nCount > 3* 30)
             {
                 nCount = 0;
                 step = STEP_DONE;

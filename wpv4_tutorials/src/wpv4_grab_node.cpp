@@ -51,12 +51,29 @@ void ObjCoordCB(const wpv4_behaviors::Coord::ConstPtr &msg)
         ROS_WARN("[ObjCoordCB] obj = %d",nNumObj);
         if(nNumObj > 0)
         {
-            ROS_WARN("[ObjCoordCB] Grab %s! (%.2f , %.2f , %.2f)",msg->name[0].c_str(),msg->x[0],msg->y[0],msg->z[0]);
-            grab_msg.position.x = msg->x[0];
-            grab_msg.position.y = msg->y[0];
-            grab_msg.position.z = msg->z[0];
-            grab_pub.publish(grab_msg);
-            bGrabbing = true;
+            int nMidIndex = 0;
+            float fMidDiff = fabs(msg->y[0]);
+            for(int i=1;i<nNumObj;i++)
+            {
+                float curMidDiff = fabs(msg->y[i]);
+               if( fabs(msg->x[i] - 1.0) < 0.5 )
+                {
+                    if(curMidDiff < fMidDiff)
+                    {
+                        nMidIndex = i;
+                        fMidDiff = curMidDiff;
+                    }
+                }
+            }
+            if(fMidDiff < 0.5)
+            {
+                    ROS_WARN("[ObjCoordCB] Grab %s! (%.2f , %.2f , %.2f)",msg->name[nMidIndex].c_str(),msg->x[nMidIndex],msg->y[nMidIndex],msg->z[nMidIndex]);
+                    grab_msg.position.x = msg->x[nMidIndex];
+                    grab_msg.position.y = msg->y[nMidIndex];
+                    grab_msg.position.z = msg->z[nMidIndex];
+                    grab_pub.publish(grab_msg);
+                    bGrabbing = true;
+            }
         }
     }
 }

@@ -71,6 +71,10 @@ int main(int argc, char** argv)
     
     joint_ctrl_pub.publish(ctrl_msg);
 
+    ros::Duration(0.3).sleep();
+
+    joint_ctrl_pub.publish(ctrl_msg);
+
     ros::spin();
 
     return 0;

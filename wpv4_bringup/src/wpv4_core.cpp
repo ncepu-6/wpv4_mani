@@ -260,14 +260,23 @@ int main(int argc, char** argv)
                 fVz = (fPosDiff[0] + fPosDiff[1]) * 0.5;
                 //////////////////////////////////
                 //方案一 通过电机码盘结算里程计数据
-                // fVx = fVx/(fTimeDur*45400);
-                // fVy = 0;
-                // fVz = fVz*3.14159*2/(fTimeDur*103400);
+                if(nChassisType == CT_TRACK)
+                {
+                    fVx = fVx/(fTimeDur*45400);
+                    fVy = 0;
+                    fVz = fVz*3.14159*2/(fTimeDur*24520); 
+                }
+                else
+                {
+                    // fVx = fVx/(fTimeDur*45400);
+                    // fVy = 0;
+                    // fVz = fVz*3.14159*2/(fTimeDur*103400); 
+                    // 方案二 直接把下发速度当作里程计积分依据
+                    fVx = lastVel.linear.x;
+                    fVy = lastVel.linear.y;
+                    fVz = lastVel.angular.z;
+                }
                 //////////////////////////////////
-                // 方案二 直接把下发速度当作里程计积分依据
-                fVx = lastVel.linear.x;
-                fVy = lastVel.linear.y;
-                fVz = lastVel.angular.z;
                
                 ///////////////////////////////////
                 //ROS_INFO("[odom] liner(%.2f %.2f) angular(%.2f)",fVx,fVy,fVz);

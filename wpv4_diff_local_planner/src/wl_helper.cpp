@@ -45,7 +45,7 @@ void InitHelper()
 	memset(map_path, 0, MAP_WIDTH*MAP_HEIGHT);
 	memset(map_back, 0, MAP_WIDTH*MAP_HEIGHT);
 	//�����״��ģ��
-    SetBorder(1.2);
+    SetBorder(0.50);
 
 	//·����ģ��
 	memset(TempSinglePath, 0, 255 * 255);
@@ -141,7 +141,7 @@ void SetBorder(float inBorder)
             int x_offset = abs(x - 20);
             int y_offset = abs(y - 20);
 
-            if (x_offset <= x_range && x_offset <= y_range)
+            if (x_offset <= x_range && y_offset <= y_range)
             {
                 TempSinglePoint[y * 41 + x] = 0xff;
             }

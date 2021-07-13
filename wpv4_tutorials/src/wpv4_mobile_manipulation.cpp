@@ -59,19 +59,47 @@ void ObjCoordCB(const wpv4_behaviors::Coord::ConstPtr &msg)
 {
     if(step == STEP_OBJ_DETECT)
     {
-        // 获取盒子检测结果
-        int obj_num = msg->name.size();
-        ROS_INFO("[OBJCoordCB] obj_num = %d",obj_num);
-        for(int i = 0;i<obj_num;i++)
+        int nNumObj = msg->name.size();
+        ROS_INFO("[OBJCoordCB] nNumObj = %d",nNumObj);
+        if(nNumObj > 0)
         {
-            ROS_INFO("[OBJCoordCB]  %s  (%.2f , %.2f , %.2f)",msg->name[i].c_str(),msg->x[i],msg->y[i],msg->z[i]);
+            int nMidIndex = 0;
+            float fMidDiff = fabs(msg->y[0]);
+            for(int i=1;i<nNumObj;i++)
+            {
+                float curMidDiff = fabs(msg->y[i]);
+               if( fabs(msg->x[i] - 1.0) < 0.5 )
+                {
+                    if(curMidDiff < fMidDiff)
+                    {
+                        nMidIndex = i;
+                        fMidDiff = curMidDiff;
+                    }
+                }
+            }
+            if(fMidDiff < 0.5)
+            {
+                    ROS_WARN("[ObjCoordCB] Grab %s! (%.2f , %.2f , %.2f)",msg->name[nMidIndex].c_str(),msg->x[nMidIndex],msg->y[nMidIndex],msg->z[nMidIndex]);
+                    grab_obj_msg.position.x = msg->x[nMidIndex];
+                    grab_obj_msg.position.y = msg->y[nMidIndex];
+                    grab_obj_msg.position.z = msg->z[nMidIndex];
+                    grab_obj_pub.publish(grab_obj_msg);
+                    step = STEP_GRAB_OBJ;
+            }
         }
-        int grab_obj_index = 0;
-        grab_obj_msg.position.x = msg->x[grab_obj_index];
-        grab_obj_msg.position.y = msg->y[grab_obj_index];
-        grab_obj_msg.position.z = msg->z[grab_obj_index];
-        grab_obj_pub.publish(grab_obj_msg);
-        step = STEP_GRAB_OBJ;
+        // 获取盒子检测结果
+        // int obj_num = msg->name.size();
+        // ROS_INFO("[OBJCoordCB] obj_num = %d",obj_num);
+        // for(int i = 0;i<obj_num;i++)
+        // {
+        //     ROS_INFO("[OBJCoordCB]  %s  (%.2f , %.2f , %.2f)",msg->name[i].c_str(),msg->x[i],msg->y[i],msg->z[i]);
+        // }
+        // int grab_obj_index = 0;
+        // grab_obj_msg.position.x = msg->x[grab_obj_index];
+        // grab_obj_msg.position.y = msg->y[grab_obj_index];
+        // grab_obj_msg.position.z = msg->z[grab_obj_index];
+        // grab_obj_pub.publish(grab_obj_msg);
+        // step = STEP_GRAB_OBJ;
     }
 }
 

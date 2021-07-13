@@ -72,11 +72,11 @@
 
 // 默认检测范围
 static float filter_x_max = 1.5;
-static float filter_x_min = 0.3;
+static float filter_x_min = 0.5;
 static float filter_y_max = 0.75;
 static float filter_y_min = -0.75;
 static float filter_z_max = 0.5;
-static float filter_z_min = -0.1;
+static float filter_z_min = -0.05;
 
 // 工作模式
 #define MODE_IDLE                   0

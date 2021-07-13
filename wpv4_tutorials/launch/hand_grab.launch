@@ -21,6 +21,9 @@
     <rosparam command="load" file="$(find wpv4_bringup)/config/wpv4_zeros.yaml" />
   </node>
 
+  <!-- rh56df3_core -->
+  <node name="rh56df3_core" pkg="rh56df3_bringup" type="rh56df3_core"/>
+
   <!-- wpm2 core-->
   <node name="wpm2_core" pkg="wpm2_bringup" type="wpm2_core" output="screen">
     <param name="serial_port" type="string" value="/dev/wpv4_mani"/> 
