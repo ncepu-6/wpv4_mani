@@ -1,4 +1,4 @@
-#define CV_WIN
+//#define CV_WIN
 
 #include <waterplus_local_planner/wl_helper.h>
 #include <string.h>
@@ -45,7 +45,7 @@ void InitHelper()
 	memset(map_path, 0, MAP_WIDTH*MAP_HEIGHT);
 	memset(map_back, 0, MAP_WIDTH*MAP_HEIGHT);
 	//�����״��ģ��
-    SetBorder(0.50);
+    SetBorder(0.90);		//避障范围
 
 	//·����ģ��
 	memset(TempSinglePath, 0, 255 * 255);

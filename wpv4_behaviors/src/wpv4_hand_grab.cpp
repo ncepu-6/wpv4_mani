@@ -44,8 +44,8 @@
 
 // 抓取参数调节（单位：米）
 static float grab_y_offset = 0.0f;                  //机器人对准物品，横向位移偏移量
-
 static float target_dist = 0.95;                       //伸出手臂抓取前，对准物品的距离
+
 static float target_x_k = 0.3;                          //对准物品时，前后移动的速度系数
 static float target_z_k = 0.3;                          //对准物品时，旋转的速度系数
 
