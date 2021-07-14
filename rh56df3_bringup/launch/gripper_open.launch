@@ -1,0 +1,7 @@
+<launch>
+
+  <node name="rh56df3_core" pkg="rh56df3_bringup" type="rh56df3_core" output="screen"/>
+
+  <node name="rh56df3_gripper_open" pkg="rh56df3_bringup" type="rh56df3_gripper_open" />
+
+</launch>

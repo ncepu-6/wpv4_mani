@@ -1,0 +1,5 @@
+# udev rule for rh56df3
+#
+#KERNEL=="ttyUSB*", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE:="0777", SYMLINK+="rh56df3"
+KERNEL=="ttyUSB*", KERNELS=="3-1.3", MODE:="0777", SYMLINK+="rh56df3"
+
