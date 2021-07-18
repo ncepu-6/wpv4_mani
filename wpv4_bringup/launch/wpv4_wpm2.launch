@@ -17,8 +17,6 @@
       <param name="serial_port" type="string" value="/dev/wpv4_mani"/> 
   </node>
 
-  <node name="wpm2_trackbars" pkg="wpm2_tutorials" type="wpm2_trackbars" output="screen"/>
-
   <param name="robot_description" command="$(find xacro)/xacro.py $(arg model)" />
   <param name="use_gui" value="$(arg gui)"/>
 
