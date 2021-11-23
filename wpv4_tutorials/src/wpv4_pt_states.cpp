@@ -38,12 +38,22 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 
-void imuCallback(const sensor_msgs::JointState::ConstPtr& msg)
+void JointStatesCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-  double joint_pos[2];
-  joint_pos[0] =  msg->position[0];
-  joint_pos[1] =  msg->position[1];
-  ROS_INFO("[wpv4_pt_states]  pan= %.2f tilt= %.2f",joint_pos[0],joint_pos[1]);
+  double pt_pos[2];
+  int nNumJoints = msg->position.size();
+  for(int i=0;i<nNumJoints;i++)
+  {
+    if(msg->name[i] == "wp_tilt")
+    {
+      pt_pos[0] =  msg->position[i];
+    }
+    if(msg->name[i] == "wp_pitch")
+    {
+      pt_pos[1] =  msg->position[i];
+    }
+  }
+  ROS_INFO("[wpv4_pt_states]  pan= %.2f tilt= %.2f",pt_pos[0],pt_pos[1]);
 }
 
 int main(int argc, char **argv)
@@ -52,7 +62,7 @@ int main(int argc, char **argv)
   ROS_INFO("[wpv4_pt_states]");
 
   ros::NodeHandle n;
-  ros::Subscriber pt_st_sub = n.subscribe("/joint_states", 100, imuCallback);
+  ros::Subscriber pt_st_sub = n.subscribe("/joint_states", 100, JointStatesCallback);
   ros::spin();
 
   return 0;
